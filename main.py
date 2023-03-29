@@ -5,20 +5,6 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import json
 import urllib.request
 import xml.dom.minidom
-import datetime
-
-
-# Возвращает текущее время
-def nowp(a):  # Аргументы: 0 - Дата/Месяц/Год; 1 - Дата; 2 - Месяц; 3 - Год
-    current_date = datetime.datetime.now()
-    if a == 0:
-        return current_date.strftime('%d/%m/%Y')
-    if a == 1:
-        return current_date.strftime('%d')
-    if a == 2:
-        return current_date.strftime('%m')
-    if a == 3:
-        return current_date.strftime('%Y')
 
 
 def converterStart():
@@ -53,7 +39,9 @@ def write_msg(user_id, message):
 
 
 # API-ключ созданный ранее
-token = "vk1.a.HvAMs19yEDZK28npckGJhtF_6J2LEb3j9UgNAlx1Xom4xt9Xv_ibLBPFcjj1fpDj9wSP6i_ln2MqQYSwDpP-RzXSpvD1SPSx9f7BARSkoqdNS0cYWinoxbJ6lOVZwOxR0a6qx1AEdZXRitM24upM6paIPfqd5Y5lQQc1c9M_uMdTXI6AEnAOlzRwHrUrYOhuoUOM74VhUB33paAFPjy_yA"
+tokenName = open('token.txt', 'r')
+token = tokenName.read()
+tokenName.close()
 
 # Авторизуемся как сообщество
 vk = vk_api.VkApi(token=token)
@@ -66,15 +54,6 @@ def mainmenu():
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Конвертер валют', color=VkKeyboardColor.SECONDARY)
     keyboard.add_button('Погода', color=VkKeyboardColor.SECONDARY)
-    """
-    keyboard.add_button('На завтра', color=VkKeyboardColor.NEGATIVE)
-    keyboard.add_line()  # переход на вторую строку
-    keyboard.add_button('на эту неделю', color=VkKeyboardColor.PRIMARY)
-    keyboard.add_button('на следующую неделю', color=VkKeyboardColor.PRIMARY)
-    keyboard.add_line()  # переход на вторую строку
-    keyboard.add_button('какая неделя?', color=VkKeyboardColor.SECONDARY)
-    keyboard.add_button('какая группа?', color=VkKeyboardColor.SECONDARY)
-    """
     vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                          keyboard=keyboard.get_keyboard(), message='Выберите функцию')
 
@@ -182,7 +161,7 @@ inputFlag = 0
 for event in longpoll.listen():
 
     # Если пришло новое сообщение
-    if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+    if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.to_me:
 
         # Если оно имеет метку для меня(то есть бота)
         if event.to_me:

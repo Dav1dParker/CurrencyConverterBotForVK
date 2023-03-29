@@ -172,7 +172,7 @@ for event in longpoll.listen():
                 write_msg(event.user_id, 'Привет, ' + vkplus.users.get(user_id=event.user_id)[0]['first_name'])
                 continue
             elif request == "пока":
-                write_msg(event.user_id, "Пока((")
+                write_msg(event.user_id, "Пока")
                 continue
             elif request == "бот":
                 keboard(group)

@@ -96,7 +96,8 @@ def cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue):
     valute2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
     for i in range(len(ValName)):
         if name1 == ValName[i]:  # Ищем совпадение названия выбранной валюты и перебираемых названий валют
-            valute1 = float(ValValue[i]) / float(ValNom[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
+            valute1 = float(ValValue[i]) / float(
+                ValNom[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
             break
 
     for i in range(len(ValName)):  # Тоже самое для второй валюты
@@ -139,7 +140,7 @@ def moscow():
                  'broken clouds: 51-84%': "разорванные облака: 51-84%",
                  'overcast clouds: 85-100%': "Облачность: 85-100%"}
     weather = requests.get(
-        "http://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
+        "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
     jweather = json.loads(weather.content)
     for i in jweather["weather"]:
         mainW = (i["main"])
@@ -158,39 +159,33 @@ def moscow():
     dir = str(winddirections[direction])
     if float(speed) <= 0.2:
         windtype = "Штиль"
-    if float(speed) >= 0.3 and float(speed) <= 1.5:
+    if 0.3 <= float(speed) <= 1.5:
         windtype = "Тихий"
-    if float(speed) >= 1.6 and float(speed) <= 3.3:
+    if 1.6 <= float(speed) <= 3.3:
         windtype = "Лёгкий"
-    if float(speed) >= 3.4 and float(speed) <= 5.4:
+    if 3.4 <= float(speed) <= 5.4:
         windtype = "Слабый"
-    if float(speed) >= 5.5 and float(speed) <= 7.9:
+    if 5.5 <= float(speed) <= 7.9:
         windtype = "Умеренный"
-    if float(speed) >= 8 and float(speed) <= 10.7:
+    if 8 <= float(speed) <= 10.7:
         windtype = "Свежий"
-    if float(speed) >= 10.8 and float(speed) <= 13.8:
+    if 10.8 <= float(speed) <= 13.8:
         windtype = "Сильный"
-    if float(speed) >= 13.9 and float(speed) <= 17.1:
+    if 13.9 <= float(speed) <= 17.1:
         windtype = "Крепкий"
-    if float(speed) >= 17.2 and float(speed) <= 20.7:
+    if 17.2 <= float(speed) <= 20.7:
         windtype = "Очень крепкий"
-    if float(speed) >= 20.8 and float(speed) <= 24.4:
+    if 20.8 <= float(speed) <= 24.4:
         windtype = "Шторм"
-    if float(speed) >= 24.5 and float(speed) <= 28.4:
+    if 24.5 <= float(speed) <= 28.4:
         windtype = "Сильный шторм"
-    if float(speed) >= 28.5 and float(speed) <= 32.6:
+    if 28.5 <= float(speed) <= 32.6:
         windtype = "Жестокий шторм"
     if float(speed) >= 33:
         windtype = "Ураган"
     forecat = ("Погода в Москве: " + mainW + "\n" + descriptionW + " Температура " + str(int(temp_min)) + "-" + str(
         int(temp_max)) + "°C\n" + "Давление: " + str(int(float(pressure) * 0.750064)) + "мм рт.ст. Влажность: " + str(
         aqua) + "%\n" + "Ветер: " + windtype + ", " + str(speed) + "м/с, " + dir)
-    """
-    print("Погода в Москве: " + mainW)
-    print(descriptionW + " Температура " + str(int(temp_min)) + "-" + str(int(temp_max)) + "°C")
-    print("Давление: " + str(int(float(pressure) * 0.750064)) + "мм рт.ст. Влажность: " + str(aqua) + "%")
-    print("Ветер: " + windtype +)
-    """
     write_msg(event.user_id, forecat)
 
 
@@ -225,12 +220,12 @@ for event in longpoll.listen():
                 converterMenu(ValName)
                 continue
             elif request == "перевести":
-                #Для тестирования:
+                # Для тестирования:
                 # ————————————————————————————
                 entered_val = 10
                 name1 = "Австралийский доллар"
                 name2 = "Российский рубль"
-                #————————————————————————————
+                # ————————————————————————————
 
                 answer = cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue)
                 write_msg(event.user_id, str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)

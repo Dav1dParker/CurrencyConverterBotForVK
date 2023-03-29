@@ -2,32 +2,47 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 import requests
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-import datetime
 import json
-
-
-def sevendays(s):  # Возвращает дату начала и конца текущей недели в формате День.Месяц.Год - День.Месяц.Год
-    current_date = datetime.datetime.now()
-    day = current_date.strftime('%m.%d.%y')
-    dt = datetime.datetime.strptime(day, '%m.%d.%y')
-    start = dt - datetime.timedelta(days=dt.weekday()) - datetime.timedelta(days=s)  # Начало недели
-    return start
+import urllib.request
+import xml.dom.minidom
+import datetime
 
 
 # Возвращает текущее время
-def nowp(a, n):  # Аргументы: 0 - Дата/Месяц/Год; 1 - Дата; 2 - Месяц; 3 - Год
+def nowp(a):  # Аргументы: 0 - Дата/Месяц/Год; 1 - Дата; 2 - Месяц; 3 - Год
     current_date = datetime.datetime.now()
     if a == 0:
-        return current_date.strftime('%d.%m')
+        return current_date.strftime('%d/%m/%Y')
     if a == 1:
         return current_date.strftime('%d')
     if a == 2:
-        current_date = datetime.datetime.today() + datetime.timedelta(days=n)
-        return current_date.strftime('%d.%m')
+        return current_date.strftime('%m')
     if a == 3:
         return current_date.strftime('%Y')
-    if a == 4:
-        return current_date.weekday()
+
+
+def converterStart():
+    link = "http://www.cbr.ru/scripts/XML_daily.asp?date_req=" + nowp(0)  # Ссылка на сегодняшние котировки
+    response = urllib.request.urlopen(link)
+    ValName = ["Российский рубль"]  # Список с названиями валют
+    ValNom = ["1.0"]  # Список с номиналами валют
+    ValValue = ["1.0"]  # Список с курсом валют
+    dom = xml.dom.minidom.parse(response)  # Получение DOM структуры файла #Знать бы что такое DOM
+    dom.normalize()
+    nodeArray = dom.getElementsByTagName("Valute")  # Получение элементов с тегом
+    for node in nodeArray:
+        childList = node.childNodes  # Получение дочерних элементов
+        for child in childList:
+            if (child.nodeName == "Name"):
+                ValName.append(child.childNodes[
+                                   0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между друг другом только по индексу. Нельзя менять порядок только в одном списке, только во всех одновременно!
+            if (child.nodeName == "Nominal"):
+                ValNom.append(child.childNodes[0].nodeValue)
+            if (child.nodeName == "Value"):
+                ValValue.append(child.childNodes[0].nodeValue)
+            # print(child.nodeName)
+            # print(child.childNodes[0].nodeValue) #Получение значения
+    return ValName, ValNom, ValValue
 
 
 def write_msg(user_id, message):
@@ -47,10 +62,11 @@ week = datetime.datetime.today() - datetime.datetime(2022, 2, 9)
 week = int(week.days / 7 + 1)
 
 
-def keboard(group):
-    group = group.upper()
+def mainmenu():
     keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('на сегодня', color=VkKeyboardColor.POSITIVE)
+    keyboard.add_button('Конвертер валют', color=VkKeyboardColor.SECONDARY)
+    keyboard.add_button('Погода', color=VkKeyboardColor.SECONDARY)
+    """
     keyboard.add_button('На завтра', color=VkKeyboardColor.NEGATIVE)
     keyboard.add_line()  # переход на вторую строку
     keyboard.add_button('на эту неделю', color=VkKeyboardColor.PRIMARY)
@@ -58,9 +74,22 @@ def keboard(group):
     keyboard.add_line()  # переход на вторую строку
     keyboard.add_button('какая неделя?', color=VkKeyboardColor.SECONDARY)
     keyboard.add_button('какая группа?', color=VkKeyboardColor.SECONDARY)
+    """
+    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                         keyboard=keyboard.get_keyboard(), message='Выберите валюту')
+
+
+def converterMenu(ValName):
+    keyboard = VkKeyboard(one_time=True)
+    for i in range(40):
+        print(ValName[i])
+        keyboard.add_button(ValName[i], color=VkKeyboardColor.SECONDARY)
+        if i % 4 == 0 and i != 0:
+            keyboard.add_line()
+
 
     vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                         keyboard=keyboard.get_keyboard(), message='показать расписание ' + group.upper())
+                         keyboard=keyboard.get_keyboard(), message='Выберите валюту')
 
 
 def moscow():
@@ -175,36 +204,14 @@ for event in longpoll.listen():
                 write_msg(event.user_id, "Пока")
                 continue
             elif request == "бот":
-                keboard(group)
+                mainmenu()
                 continue
-            elif request[:4:] == "бот " and request[8] == "-" and request[11] == "-":
-                group = request[4::]
-                keboard(group)
-                continue
-            elif request == "на сегодня":
-                continue
-            elif request == "на завтра":
-                continue
-            elif request == "на эту неделю":
+            elif request == "конвертер валют":
+                ValName, ValNom, ValValue = converterStart()
+                converterMenu(ValName)
                 continue
             elif request == "погода":
                 moscow()
                 continue
-            elif request == "на следующую неделю":
-                continue
-            elif request == "какая группа?":
-                write_msg(event.user_id, "Показываю расписание группы " + group.upper())
-                continue
-            elif request == "какая неделя?":
-                write_msg(event.user_id, "Идёт " + str(week) + " неделя")
-                continue
-
-            if request[:4:] == "бот " and request[8] != "-" and request[len(request) - 3] == "-":
-                group = request[-10::]
-                request = request[:-11:]
-                request = request[4::]
-
-            if request[:4:] == "бот " and request[8] != "-":
-                request = request[4::]
             else:
                 write_msg(event.user_id, "Неизвестная команда")

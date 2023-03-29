@@ -40,8 +40,6 @@ def converterStart():
                 ValNom.append(child.childNodes[0].nodeValue)
             if (child.nodeName == "Value"):
                 ValValue.append(child.childNodes[0].nodeValue)
-            # print(child.nodeName)
-            # print(child.childNodes[0].nodeValue) #Получение значения
     for i in range(len(ValValue)):  # , -> .
         ValValue[i] = ValValue[i].replace(',', '.')
     return ValName, ValNom, ValValue
@@ -94,7 +92,6 @@ def converterMenu(ValName):
 
 
 def cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue):
-    res = 0.0
     valute1 = 0.0  # Переменная в которой хранится курс первой валюты к рублю
     valute2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
     for i in range(len(ValName)):
@@ -106,9 +103,7 @@ def cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue):
         if name2 == ValName[i]:
             valute2 = float(ValValue[i]) / float(ValNom[i])
             break
-
-    res = (entered_val * valute1) / valute2  # Вычисление соотношения курсов валют (Ответа)
-    return res  # Вывод результата
+    return (entered_val * valute1) / valute2  # Возврат результата
 
 
 def moscow():

@@ -42,6 +42,8 @@ def converterStart():
                 ValValue.append(child.childNodes[0].nodeValue)
             # print(child.nodeName)
             # print(child.childNodes[0].nodeValue) #Получение значения
+    for i in range(len(ValValue)):  # , -> .
+        ValValue[i] = ValValue[i].replace(',', '.')
     return ValName, ValNom, ValValue
 
 
@@ -81,15 +83,32 @@ def mainmenu():
 
 def converterMenu(ValName):
     keyboard = VkKeyboard(one_time=True)
-    for i in range(40):
+    for i in range(10):
         print(ValName[i])
         keyboard.add_button(ValName[i], color=VkKeyboardColor.SECONDARY)
-        if i % 4 == 0 and i != 0:
+        if i != 9:
             keyboard.add_line()
-
 
     vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                          keyboard=keyboard.get_keyboard(), message='Выберите валюту')
+
+
+def cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue):
+    res = 0.0
+    valute1 = 0.0  # Переменная в которой хранится курс первой валюты к рублю
+    valute2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
+    for i in range(len(ValName)):
+        if name1 == ValName[i]:  # Ищем совпадение названия выбранной валюты и перебираемых названий валют
+            valute1 = float(ValValue[i]) / float(ValNom[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
+            break
+
+    for i in range(len(ValName)):  # Тоже самое для второй валюты
+        if name2 == ValName[i]:
+            valute2 = float(ValValue[i]) / float(ValNom[i])
+            break
+
+    res = (entered_val * valute1) / valute2  # Вычисление соотношения курсов валют (Ответа)
+    return res  # Вывод результата
 
 
 def moscow():
@@ -210,6 +229,16 @@ for event in longpoll.listen():
                 ValName, ValNom, ValValue = converterStart()
                 converterMenu(ValName)
                 continue
+            elif request == "перевести":
+                #Для тестирования:
+                # ————————————————————————————
+                entered_val = 10
+                name1 = "Австралийский доллар"
+                name2 = "Российский рубль"
+                #————————————————————————————
+
+                answer = cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue)
+                write_msg(event.user_id, str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
             elif request == "погода":
                 moscow()
                 continue

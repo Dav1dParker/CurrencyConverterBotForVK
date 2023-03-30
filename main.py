@@ -5,10 +5,13 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import json
 import urllib.request
 import xml.dom.minidom
+import datetime
+
+
 
 
 def converterStart():
-    link = "http://www.cbr.ru/scripts/XML_daily.asp?date_req=" + nowp(0)  # Ссылка на сегодняшние котировки
+    link = "https://www.cbr.ru/scripts/XML_daily.asp?date_req=" + datetime.datetime.now().strftime('%d/%m/%Y')  # Ссылка на сегодняшние котировки
     response = urllib.request.urlopen(link)
     ValName = ["Российский рубль"]  # Список с названиями валют
     ValNom = ["1.0"]  # Список с номиналами валют
@@ -21,7 +24,9 @@ def converterStart():
         for child in childList:
             if (child.nodeName == "Name"):
                 ValName.append(child.childNodes[
-                                   0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между друг другом только по индексу. Нельзя менять порядок только в одном списке, только во всех одновременно!
+                                   0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между
+                # друг другом только по индексу. Нельзя менять порядок только в одном списке, только во всех
+                # одновременно!
             if (child.nodeName == "Nominal"):
                 ValNom.append(child.childNodes[0].nodeValue)
             if (child.nodeName == "Value"):
@@ -30,6 +35,9 @@ def converterStart():
         ValValue[i] = ValValue[i].replace(',', '.')
     for i in range(len(ValName)):
         ValName[i] = ValName[i].lower()
+    print(ValName)
+    print(ValNom)
+    print(ValValue)
     return ValName, ValNom, ValValue
 
 
@@ -94,7 +102,7 @@ def moscow():
                  'heavy shower rain and drizzle': "сильный туман и ливень", 'shower drizzle': "туман с ураганом",
                  'light rain': "небольшой дождь", 'moderate rain': "умеренный дождь",
                  'heavy intensity rain': "сильный дождь", 'very heavy rain': "очень сильный дождь",
-                 'extreme rain': "черезвычайно сильный дождь",
+                 'extreme rain': "чрезвычайно сильный дождь",
                  'freezing rain': "ледяной дождь", 'light intensity shower rain': "небольшой ледяной дождь",
                  'heavy intensity shower rain': "сильный ливень", 'ragged shower rain': "ледянной ливень",
                  'light snow': "легкий снег", 'Heavy snow': "сильный снег", 'Sleet': "Слякоть",
@@ -158,6 +166,9 @@ def moscow():
 
 # Основной цикл
 inputFlag = 0
+entered_val = 1
+name1 = "доллар сша"
+name2 = "российский рубль"
 for event in longpoll.listen():
 
     # Если пришло новое сообщение
@@ -173,28 +184,43 @@ for event in longpoll.listen():
             if inputFlag == 1:
                 inputFlag = 0
                 name1 = request
-                vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                     keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name1)
+                if name1 in ValName:
+                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                         keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name1)
+                else:
+                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                         keyboard=keyboard.get_keyboard(),
+                                         message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                 "как написано в предложенном списке")
                 continue
             elif inputFlag == 2:
                 inputFlag = 0
                 name2 = request
-                vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                     keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name2)
+                if name2 in ValName:
+                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                         keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name2)
+                else:
+                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                         keyboard=keyboard.get_keyboard(),
+                                         message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                 "как написано в предложенном списке")
                 continue
             elif inputFlag == 3:
                 inputFlag = 0
                 try:
                     entered_val = float(request)
-                except TypeError:
-                    write_msg(event.user_id, "Неверный формат")
+                except ValueError:
+                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                         keyboard=keyboard.get_keyboard(), message="неверный формат\n Введите сумму в "
+                                                                                   "виде 123.321")
                     continue
                 vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                      keyboard=keyboard.get_keyboard(), message="Вы ввели " + str(entered_val))
                 continue
             if request == "начать":
                 write_msg(event.user_id,
-                          "Здравствуйте, я бот для конвертации валют. Вы можете производить взаимодействие с помощью команды 'бот'\n Также я могу показать погоду в Москве по команде'погода'")
+                          "Здравствуйте, я бот для конвертации валют. Вы можете производить взаимодействие с помощью "
+                          "команды 'бот'\n Также я могу показать погоду в Москве по команде'погода'")
                 continue
             if request == "привет":
                 write_msg(event.user_id, 'Привет, ' + vkplus.users.get(user_id=event.user_id)[0]['first_name'])
@@ -210,6 +236,7 @@ for event in longpoll.listen():
                 cur_list = "Вот валюты с которыми я могу работать: \n"
                 for i in ValName:
                     cur_list += i + "\n"
+                cur_list += "По умолчанию перевожу USD в RUB\n"
                 keyboard = VkKeyboard(one_time=True)
                 keyboard.add_button('Выбрать исходную валюту', color=VkKeyboardColor.SECONDARY)
                 keyboard.add_button('Выбрать целевую валюту', color=VkKeyboardColor.SECONDARY)

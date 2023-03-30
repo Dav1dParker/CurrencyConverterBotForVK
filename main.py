@@ -75,7 +75,7 @@ def cur_calculation(entered_val, name1, name2, currency_names, currency_nominals
         if name2 == currency_names[i]:
             currency2 = float(currency_value[i]) / float(currency_nominals[i])
             break
-    return (entered_val * currency1) / currency2  # Возврат результата
+    return round(((entered_val * currency1) / currency2), 2)  # Возврат результата
 
 
 def moscow():

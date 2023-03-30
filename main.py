@@ -8,37 +8,33 @@ import xml.dom.minidom
 import datetime
 
 
-
-
-def converterStart():
-    link = "https://www.cbr.ru/scripts/XML_daily.asp?date_req=" + datetime.datetime.now().strftime('%d/%m/%Y')  # Ссылка на сегодняшние котировки
+def converter_start():
+    link = "https://www.cbr.ru/scripts/XML_daily.asp?date_req=" + datetime.datetime.now().strftime(
+        '%d/%m/%Y')  # Ссылка на сегодняшние котировки
     response = urllib.request.urlopen(link)
-    ValName = ["Российский рубль"]  # Список с названиями валют
-    ValNom = ["1.0"]  # Список с номиналами валют
-    ValValue = ["1.0"]  # Список с курсом валют
+    currency_names = ["Российский рубль"]  # Список с названиями валют
+    currency_nominals = ["1.0"]  # Список с номиналами валют
+    currency_value = ["1.0"]  # Список с курсом валют
     dom = xml.dom.minidom.parse(response)  # Получение DOM структуры файла #Знать бы что такое DOM
     dom.normalize()
-    nodeArray = dom.getElementsByTagName("Valute")  # Получение элементов с тегом
-    for node in nodeArray:
-        childList = node.childNodes  # Получение дочерних элементов
-        for child in childList:
-            if (child.nodeName == "Name"):
-                ValName.append(child.childNodes[
-                                   0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между
+    node_array = dom.getElementsByTagName("Valute")  # Получение элементов с тегом
+    for node in node_array:
+        child_list = node.childNodes  # Получение дочерних элементов
+        for child in child_list:
+            if child.nodeName == "Name":
+                currency_names.append(child.childNodes[
+                                          0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между
                 # друг другом только по индексу. Нельзя менять порядок только в одном списке, только во всех
                 # одновременно!
-            if (child.nodeName == "Nominal"):
-                ValNom.append(child.childNodes[0].nodeValue)
-            if (child.nodeName == "Value"):
-                ValValue.append(child.childNodes[0].nodeValue)
-    for i in range(len(ValValue)):  # , -> .
-        ValValue[i] = ValValue[i].replace(',', '.')
-    for i in range(len(ValName)):
-        ValName[i] = ValName[i].lower()
-    print(ValName)
-    print(ValNom)
-    print(ValValue)
-    return ValName, ValNom, ValValue
+            if child.nodeName == "Nominal":
+                currency_nominals.append(child.childNodes[0].nodeValue)
+            if child.nodeName == "Value":
+                currency_value.append(child.childNodes[0].nodeValue)
+    for i in range(len(currency_value)):  # , -> .
+        currency_value[i] = currency_value[i].replace(',', '.')
+    for i in range(len(currency_names)):
+        currency_names[i] = currency_names[i].lower()
+    return currency_names, currency_nominals, currency_value
 
 
 def write_msg(user_id, message):
@@ -53,36 +49,37 @@ tokenName.close()
 
 # Авторизуемся как сообщество
 vk = vk_api.VkApi(token=token)
-vkplus = vk.get_api()
+vk_plus = vk.get_api()
 # Работа с сообщениями
 longpoll = VkLongPoll(vk)
 
 
-def mainmenu():
+def main_menu():
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Конвертер валют', color=VkKeyboardColor.SECONDARY)
     keyboard.add_button('Погода', color=VkKeyboardColor.SECONDARY)
-    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                         keyboard=keyboard.get_keyboard(), message='Выберите функцию')
+    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                          keyboard=keyboard.get_keyboard(), message='Выберите функцию')
 
 
-def cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue):
-    valute1 = 0.0  # Переменная в которой хранится курс первой валюты к рублю
-    valute2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
-    for i in range(len(ValName)):
-        if name1 == ValName[i]:  # Ищем совпадение названия выбранной валюты и перебираемых названий валют
-            valute1 = float(ValValue[i]) / float(
-                ValNom[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
+def cur_calculation(entered_val, name1, name2, currency_names, currency_nominals, currency_value):
+    currency1 = 0.0  # Переменная в которой хранится курс первой валюты к рублю
+    currency2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
+    for i in range(len(currency_names)):
+        if name1 == currency_names[i]:  # Ищем совпадение названия выбранной валюты и перебираемых названий валют
+            currency1 = float(currency_value[i]) / float(
+                currency_nominals[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
             break
 
-    for i in range(len(ValName)):  # Тоже самое для второй валюты
-        if name2 == ValName[i]:
-            valute2 = float(ValValue[i]) / float(ValNom[i])
+    for i in range(len(currency_names)):  # Тоже самое для второй валюты
+        if name2 == currency_names[i]:
+            currency2 = float(currency_value[i]) / float(currency_nominals[i])
             break
-    return (entered_val * valute1) / valute2  # Возврат результата
+    return (entered_val * currency1) / currency2  # Возврат результата
 
 
 def moscow():
+    global main_weather, description_weather, wind_type
     translate = {'Thunderstorm': "Гроза", 'Drizzle': "Моросит", 'Rain': "Дождь", 'Snow': "Снег", 'Mist': "Туман",
                  'Smoke': "Дым", 'Haze': "Легкий туман", 'Dust': "Пыль", 'Fog': "Туман", 'Sand': "Моросит",
                  'Песок': "Clear", 'Ясно': "Моросит", 'Clouds': "Облачно", 'Tornado': "торнадо", 'Squall': "Шквал",
@@ -116,59 +113,66 @@ def moscow():
                  'overcast clouds: 85-100%': "Облачность: 85-100%"}
     weather = requests.get(
         "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
-    jweather = json.loads(weather.content)
-    for i in jweather["weather"]:
-        mainW = (i["main"])
-        mainW = (translate[mainW])
-        descriptionW = (i["description"])
-        descriptionW = (translate[descriptionW])
-    temp_min = jweather["main"]["temp_min"]
-    temp_max = jweather["main"]["temp_max"]
-    pressure = jweather["main"]["pressure"]
-    aqua = jweather["main"]["humidity"]
-    speed = jweather["wind"]["speed"]
-    deg = jweather["wind"]["deg"]
-    winddirections = ("северный", "северо-восточный", "восточный", "юго-восточный", "южный", "юго-западный", "западный",
-                      "северо-западный")
+    json_weather = json.loads(weather.content)
+    for i in json_weather["weather"]:
+        main_weather = (i["main"])
+        main_weather = (translate[main_weather])
+        description_weather = (i["description"])
+        description_weather = (translate[description_weather])
+    temp_min = json_weather["main"]["temp_min"]
+    temp_max = json_weather["main"]["temp_max"]
+    pressure = json_weather["main"]["pressure"]
+    aqua = json_weather["main"]["humidity"]
+    speed = json_weather["wind"]["speed"]
+    deg = json_weather["wind"]["deg"]
+    wind_directions = (
+        "северный", "северо-восточный", "восточный", "юго-восточный", "южный", "юго-западный", "западный",
+        "северо-западный")
     direction = int((deg + 22.5) // 45 % 8)
-    dir = str(winddirections[direction])
+    dir = str(wind_directions[direction])
+    wind_type = ""
     if float(speed) <= 0.2:
-        windtype = "Штиль"
+        wind_type = "Штиль"
     if 0.3 <= float(speed) <= 1.5:
-        windtype = "Тихий"
+        wind_type = "Тихий"
     if 1.6 <= float(speed) <= 3.3:
-        windtype = "Лёгкий"
+        wind_type = "Лёгкий"
     if 3.4 <= float(speed) <= 5.4:
-        windtype = "Слабый"
+        wind_type = "Слабый"
     if 5.5 <= float(speed) <= 7.9:
-        windtype = "Умеренный"
+        wind_type = "Умеренный"
     if 8 <= float(speed) <= 10.7:
-        windtype = "Свежий"
+        wind_type = "Свежий"
     if 10.8 <= float(speed) <= 13.8:
-        windtype = "Сильный"
+        wind_type = "Сильный"
     if 13.9 <= float(speed) <= 17.1:
-        windtype = "Крепкий"
+        wind_type = "Крепкий"
     if 17.2 <= float(speed) <= 20.7:
-        windtype = "Очень крепкий"
+        wind_type = "Очень крепкий"
     if 20.8 <= float(speed) <= 24.4:
-        windtype = "Шторм"
+        wind_type = "Шторм"
     if 24.5 <= float(speed) <= 28.4:
-        windtype = "Сильный шторм"
+        wind_type = "Сильный шторм"
     if 28.5 <= float(speed) <= 32.6:
-        windtype = "Жестокий шторм"
+        wind_type = "Жестокий шторм"
     if float(speed) >= 33:
-        windtype = "Ураган"
-    forecat = ("Погода в Москве: " + mainW + "\n" + descriptionW + " Температура " + str(int(temp_min)) + "-" + str(
+        wind_type = "Ураган"
+    forecast = ("Погода в Москве: " + main_weather + "\n" + " Температура " + str(
+        int(temp_min)) + "-" + str(
         int(temp_max)) + "°C\n" + "Давление: " + str(int(float(pressure) * 0.750064)) + "мм рт.ст. Влажность: " + str(
-        aqua) + "%\n" + "Ветер: " + windtype + ", " + str(speed) + "м/с, " + dir)
-    write_msg(event.user_id, forecat)
+        aqua) + "%\n" + "Ветер: " + wind_type + ", " + str(speed) + "м/с, " + dir)
+    write_msg(event.user_id, forecast)
 
 
 # Основной цикл
-inputFlag = 0
+input_flag = 0
 entered_val = 1
 name1 = "доллар сша"
 name2 = "российский рубль"
+currency_names = ["Если вы это видите, то что-то пошло не так"]
+currency_nominals = ["Если вы это видите, то что-то пошло не так"]
+currency_value = ["Если вы это видите, то что-то пошло не так"]
+keyboard = VkKeyboard(one_time=True)
 for event in longpoll.listen():
 
     # Если пришло новое сообщение
@@ -181,60 +185,60 @@ for event in longpoll.listen():
             request = event.text
             request = request.lower()
             # Каменная логика ответа
-            if inputFlag == 1:
-                inputFlag = 0
-                name1 = request
-                if name1 in ValName:
-                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                         keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name1)
+            if input_flag == 1:
+                input_flag = 0
+                if request in currency_names:
+                    name1 = request
+                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                          keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name1)
                 else:
-                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                         keyboard=keyboard.get_keyboard(),
-                                         message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
-                                                 "как написано в предложенном списке")
+                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                          keyboard=keyboard.get_keyboard(),
+                                          message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                  "как написано в предложенном списке")
                 continue
-            elif inputFlag == 2:
-                inputFlag = 0
-                name2 = request
-                if name2 in ValName:
-                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                         keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name2)
+            elif input_flag == 2:
+                input_flag = 0
+                if request in currency_names:
+                    name2 = request
+                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                          keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name2)
                 else:
-                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                         keyboard=keyboard.get_keyboard(),
-                                         message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
-                                                 "как написано в предложенном списке")
+                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                          keyboard=keyboard.get_keyboard(),
+                                          message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                  "как написано в предложенном списке")
                 continue
-            elif inputFlag == 3:
-                inputFlag = 0
+            elif input_flag == 3:
+                input_flag = 0
                 try:
                     entered_val = float(request)
                 except ValueError:
-                    vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                         keyboard=keyboard.get_keyboard(), message="неверный формат\n Введите сумму в "
-                                                                                   "виде 123.321")
+                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                          keyboard=keyboard.get_keyboard(), message="неверный формат\n Введите сумму в "
+                                                                                    "виде 123.321")
                     continue
-                vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                     keyboard=keyboard.get_keyboard(), message="Вы ввели " + str(entered_val))
+                vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                      keyboard=keyboard.get_keyboard(), message="Вы ввели " + str(entered_val))
                 continue
             if request == "начать":
                 write_msg(event.user_id,
                           "Здравствуйте, я бот для конвертации валют. Вы можете производить взаимодействие с помощью "
-                          "команды 'бот'\n Также я могу показать погоду в Москве по команде'погода'")
+                          "команды 'бот'")
                 continue
             if request == "привет":
-                write_msg(event.user_id, 'Привет, ' + vkplus.users.get(user_id=event.user_id)[0]['first_name'])
+                write_msg(event.user_id, 'Привет, ' + vk_plus.users.get(user_id=event.user_id)[0]['first_name'])
                 continue
             elif request == "пока":
                 write_msg(event.user_id, "Пока")
                 continue
             elif request == "бот":
-                mainmenu()
+                main_menu()
                 continue
-            elif request == "конвертер валют":
-                ValName, ValNom, ValValue = converterStart()
+            elif request == "конвертер валют" or request == "1":
+                currency_names, currency_nominals, currency_value = converter_start()
                 cur_list = "Вот валюты с которыми я могу работать: \n"
-                for i in ValName:
+                for i in currency_names:
                     cur_list += i + "\n"
                 cur_list += "По умолчанию перевожу USD в RUB\n"
                 keyboard = VkKeyboard(one_time=True)
@@ -243,20 +247,20 @@ for event in longpoll.listen():
                 keyboard.add_line()
                 keyboard.add_button('Ввести сумму', color=VkKeyboardColor.PRIMARY)
                 keyboard.add_button('перевести', color=VkKeyboardColor.NEGATIVE)
-                vkplus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                     keyboard=keyboard.get_keyboard(), message=cur_list)
+                vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                      keyboard=keyboard.get_keyboard(), message=cur_list)
                 continue
             elif request == "выбрать исходную валюту":
                 write_msg(event.user_id, "Введите полное название исходной валюты")
-                inputFlag = 1
+                input_flag = 1
                 continue
             elif request == "выбрать целевую валюту":
                 write_msg(event.user_id, "Введите полное название целевой валюты")
-                inputFlag = 2
+                input_flag = 2
                 continue
             elif request == "ввести сумму":
                 write_msg(event.user_id, "Введите количество исходной валюты")
-                inputFlag = 3
+                input_flag = 3
                 continue
             elif request == "перевести":
                 # Для тестирования:
@@ -265,11 +269,23 @@ for event in longpoll.listen():
                 # name1 = "Доллар США"
                 # name2 = "Российский рубль"
                 # ————————————————————————————
-                answer = cur_calculation(entered_val, name1, name2, ValName, ValNom, ValValue)
-                write_msg(event.user_id, str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
+                try:
+                    answer = cur_calculation(entered_val, name1, name2, currency_names, currency_nominals,
+                                             currency_value)
+                    write_msg(event.user_id, str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
+                except:
+                    write_msg(event.user_id, "Что-то пошло не так")
                 continue
-            elif request == "погода":
+            elif request == "погода" or request == "2":
                 moscow()
                 continue
+            elif request == "/help" or request == "help" or request == "справка" or request == "помощь":
+                write_msg(event.user_id, "я бот для конвертации валют.\n Для входа в главного меню используйте "
+                                         "команду 'бот'\nДля быстрого доступа к конвертору валют введите команду "
+                                         "'конвертер валют' или отправьте цифру 1\nДля быстрого просмотра прогноза "
+                                         "погоды введите команду "
+                                         "'погода' или отправьте цифру 2")
+                continue
             else:
-                write_msg(event.user_id, "Неизвестная команда")
+                write_msg(event.user_id, "Неизвестная команда\n Вы можете посмотреть справку по командам с помощью "
+                                         "/help")

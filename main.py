@@ -152,29 +152,19 @@ input_flag = 0
 entered_val = 1
 first_currency_index = 14
 second_currency_index = 0
-currency_names_nominative_case = [
-    'Российский рубль', 'Австралийский доллар', 'Азербайджанский манат', 'Фунт стерлингов соединенного королевства',
-    'Армянский драм', 'Белорусский рубль', 'Болгарский лев', 'Бразильский реал', 'Венгерский форинт',
-    'Вьетнамский донг', 'Гонконгский доллар', 'Грузинский лари', 'Датская крона', 'Дирхам ОАЭ', 'Доллар США', 'Евро',
-    'Египетский фунт', 'Индийская рупия', 'Индонезийская рупия', 'Казахстанский тенге', 'Канадский доллар',
-    'Катарский риал', 'Киргизский сом', 'Китайский юань', 'Молдавский лей', 'Новозеландский доллар',
-    'Норвежская крона', 'Польский злотый', 'Румынский лей', 'сдр (специальные права заимствования)',
-    'Сингапурский доллар', 'Таджикский сомони', 'Тайский бат', 'Турецкая лира', 'Новый туркменский манат',
-    'Узбекский сум', 'Украинская гривна', 'Чешская крона', 'Шведская крона', 'Швейцарский франк', 'Сербский динар',
-    'Южноафриканский рэнд', 'Южнокорейская вона', 'Японская йена']
 
-currency_names_genitive_case = ['Российских рублей', 'Австралийских долларов', 'Азербайджанских манат',
-                                'Фунтов стерлингов', 'Армянских драмов', 'Белорусских рублей', 'Болгарский львов',
-                                'Бразильских реалов', 'Венгерских форинтов', 'Вьетнамских донгов',
-                                'Гонконгских долларов', 'Грузинских ларей', 'Датских крон', 'Дирхам ОАЭ',
-                                'Долларов США', 'Евро', 'Египетских фунтов', 'Индийских рупий', 'Индонезийских рупий',
-                                'Казахстанских тенге', 'Канадских долларов', 'Катарских риалов', 'киргизских сомов',
-                                'Китайских юаней', 'Молдавских леев', 'Новозеландских долларов', 'Норвежских крон',
-                                'Польских злотых', 'Румынских лей', 'сдр (специальные права заимствования)',
-                                'Сингапурских долларов', 'Таджикских сомони', 'Таиландских батов', 'Турецких лир',
-                                'Новых туркменских манат', 'Узбекских кумов', 'Украинских гривен', 'Чешских крон',
-                                'Шведских крон', 'Швейцарских франков', 'Сербских динаров', 'Южноафриканских рэндов',
-                                'Вон республики Корея', 'Японских иен']
+with open("currency_names_nominative_case.txt", 'r', encoding='UTF-8') as file:
+    currency_names_nominative_case = [line.rstrip() for line in file]
+file.close()
+
+with open("currency_names_genitive_case.txt", 'r', encoding='UTF-8') as file:
+    currency_names_genitive_case = [line.rstrip() for line in file]
+file.close()
+
+with open("currency_names_genitive_case_one.txt", 'r', encoding='UTF-8') as file:
+    currency_names_genitive_case_one = [line.rstrip() for line in file]
+file.close()
+
 lower_currency_names_nominative_case = [item.lower() for item in currency_names_nominative_case]
 currency_nominals = ["Если вы это видите, то что-то пошло не так"]
 currency_value = ["Если вы это видите, то что-то пошло не так"]
@@ -286,10 +276,14 @@ for event in longpoll.listen():
                                              currency_nominals, currency_value)
                     if entered_val == 1:
                         name1 = currency_names_nominative_case[first_currency_index]
+                    elif entered_val < 1 or 1 < entered_val < 5:
+                        name1 = currency_names_genitive_case_one[first_currency_index]
                     else:
                         name1 = currency_names_genitive_case[first_currency_index]
                     if answer == 1:
                         name2 = currency_names_nominative_case[second_currency_index]
+                    elif answer < 1 or 1 < answer < 5:
+                        name2 = currency_names_genitive_case_one[second_currency_index]
                     else:
                         name2 = currency_names_genitive_case[second_currency_index]
                     write_msg(event.user_id,

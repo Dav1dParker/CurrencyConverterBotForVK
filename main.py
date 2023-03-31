@@ -229,7 +229,7 @@ for event in longpoll.listen():
                         continue
                 vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                       keyboard=keyboard.get_keyboard(),
-                                      message="Вы выбрали " + currency_names_nominative_case[first_currency_index])
+                                      message="Вы выбрали " + currency_names_nominative_case[second_currency_index])
                 continue
 
 

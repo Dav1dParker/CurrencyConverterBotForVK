@@ -1,4 +1,5 @@
 import vk_api
+from vk_api import utils
 from vk_api.longpoll import VkLongPoll, VkEventType
 import requests
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
@@ -12,7 +13,6 @@ def converter_start():
     link = "https://www.cbr.ru/scripts/XML_daily.asp?date_req=" + datetime.datetime.now().strftime(
         '%d/%m/%Y')  # Ссылка на сегодняшние котировки
     response = urllib.request.urlopen(link)
-    currency_names = ["Российский рубль"]  # Список с названиями валют
     currency_nominals = ["1.0"]  # Список с номиналами валют
     currency_value = ["1.0"]  # Список с курсом валют
     dom = xml.dom.minidom.parse(response)  # Получение DOM структуры файла #Знать бы что такое DOM
@@ -21,20 +21,13 @@ def converter_start():
     for node in node_array:
         child_list = node.childNodes  # Получение дочерних элементов
         for child in child_list:
-            if child.nodeName == "Name":
-                currency_names.append(child.childNodes[
-                                          0].nodeValue)  # Добавление информации в списки ВАЖНО: Списки ассоциируются между
-                # друг другом только по индексу. Нельзя менять порядок только в одном списке, только во всех
-                # одновременно!
             if child.nodeName == "Nominal":
                 currency_nominals.append(child.childNodes[0].nodeValue)
             if child.nodeName == "Value":
                 currency_value.append(child.childNodes[0].nodeValue)
     for i in range(len(currency_value)):  # , -> .
         currency_value[i] = currency_value[i].replace(',', '.')
-    for i in range(len(currency_names)):
-        currency_names[i] = currency_names[i].lower()
-    return currency_names, currency_nominals, currency_value
+    return currency_nominals, currency_value
 
 
 def write_msg(user_id, message):
@@ -62,20 +55,10 @@ def main_menu():
                           keyboard=keyboard.get_keyboard(), message='Выберите функцию')
 
 
-def cur_calculation(entered_val, name1, name2, currency_names, currency_nominals, currency_value):
-    currency1 = 0.0  # Переменная в которой хранится курс первой валюты к рублю
-    currency2 = 0.0  # Переменная в которой хранится курс второй валюты к рублю
-    for i in range(len(currency_names)):
-        if name1 == currency_names[i]:  # Ищем совпадение названия выбранной валюты и перебираемых названий валют
-            currency1 = float(currency_value[i]) / float(
-                currency_nominals[i])  # Нашли название, значит по тому-же индексу и курс, запоминаем его.
-            break
-
-    for i in range(len(currency_names)):  # Тоже самое для второй валюты
-        if name2 == currency_names[i]:
-            currency2 = float(currency_value[i]) / float(currency_nominals[i])
-            break
-    return round(((entered_val * currency1) / currency2), 2)  # Возврат результата
+def cur_calculation(entered_val, first_currency_index, second_currency_index, currency_nominals, currency_value):
+    return round((((entered_val * float(currency_value[first_currency_index]) / float(
+        currency_nominals[first_currency_index]))) / (float(currency_value[second_currency_index]) / float(
+        currency_nominals[second_currency_index]))), 2)  # Возврат результата
 
 
 def moscow():
@@ -167,9 +150,32 @@ def moscow():
 # Основной цикл
 input_flag = 0
 entered_val = 1
-name1 = "доллар сша"
-name2 = "российский рубль"
-currency_names = ["Если вы это видите, то что-то пошло не так"]
+first_currency_index = 14
+second_currency_index = 0
+currency_names_nominative_case = [
+    'Российский рубль', 'Австралийский доллар', 'Азербайджанский манат', 'Фунт стерлингов соединенного королевства',
+    'Армянский драм', 'Белорусский рубль', 'Болгарский лев', 'Бразильский реал', 'Венгерский форинт',
+    'Вьетнамский донг', 'Гонконгский доллар', 'Грузинский лари', 'Датская крона', 'Дирхам ОАЭ', 'Доллар США', 'Евро',
+    'Египетский фунт', 'Индийская рупия', 'Индонезийская рупия', 'Казахстанский тенге', 'Канадский доллар',
+    'Катарский риал', 'Киргизский сом', 'Китайский юань', 'Молдавский лей', 'Новозеландский доллар',
+    'Норвежская крона', 'Польский злотый', 'Румынский лей', 'сдр (специальные права заимствования)',
+    'Сингапурский доллар', 'Таджикский сомони', 'Тайский бат', 'Турецкая лира', 'Новый туркменский манат',
+    'Узбекский сум', 'Украинская гривна', 'Чешская крона', 'Шведская крона', 'Швейцарский франк', 'Сербский динар',
+    'Южноафриканский рэнд', 'Южнокорейская вона', 'Японская йена']
+
+currency_names_genitive_case = ['Российских рублей', 'Австралийских долларов', 'Азербайджанских манат',
+                                'Фунтов стерлингов', 'Армянских драмов', 'Белорусских рублей', 'Болгарский львов',
+                                'Бразильских реалов', 'Венгерских форинтов', 'Вьетнамских донгов',
+                                'Гонконгских долларов', 'Грузинских ларей', 'Датских крон', 'Дирхам ОАЭ',
+                                'Долларов США', 'Евро', 'Египетских фунтов', 'Индийских рупий', 'Индонезийских рупий',
+                                'Казахстанских тенге', 'Канадских долларов', 'Катарских риалов', 'киргизских сомов',
+                                'Китайских юаней', 'Молдавских леев', 'Новозеландских долларов', 'Норвежских крон',
+                                'Польских злотых', 'Румынских лей', 'сдр (специальные права заимствования)',
+                                'Сингапурских долларов', 'Таджикских сомони', 'Таиландских батов', 'Турецких лир',
+                                'Новых туркменских манат', 'Узбекских кумов', 'Украинских гривен', 'Чешских крон',
+                                'Шведских крон', 'Швейцарских франков', 'Сербских динаров', 'Южноафриканских рэндов',
+                                'Вон республики Корея', 'Японских иен']
+lower_currency_names_nominative_case = [item.lower() for item in currency_names_nominative_case]
 currency_nominals = ["Если вы это видите, то что-то пошло не так"]
 currency_value = ["Если вы это видите, то что-то пошло не так"]
 keyboard = VkKeyboard(one_time=True)
@@ -187,27 +193,33 @@ for event in longpoll.listen():
             # Каменная логика ответа
             if input_flag == 1:
                 input_flag = 0
-                if request in currency_names:
-                    name1 = request
-                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                          keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name1)
-                else:
+                try:
+                    print(lower_currency_names_nominative_case.index(request))
+                    first_currency_index = lower_currency_names_nominative_case.index(request)
+                except ValueError:
                     vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                           keyboard=keyboard.get_keyboard(),
                                           message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
                                                   "как написано в предложенном списке")
+                    continue
+                vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                      keyboard=keyboard.get_keyboard(),
+                                      message="Вы выбрали " + currency_names_nominative_case[first_currency_index])
                 continue
             elif input_flag == 2:
                 input_flag = 0
-                if request in currency_names:
-                    name2 = request
-                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                          keyboard=keyboard.get_keyboard(), message="Вы выбрали " + name2)
-                else:
+                try:
+                    print(lower_currency_names_nominative_case.index(request))
+                    second_currency_index = lower_currency_names_nominative_case.index(request)
+                except ValueError:
                     vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                           keyboard=keyboard.get_keyboard(),
                                           message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
                                                   "как написано в предложенном списке")
+                    continue
+                vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                      keyboard=keyboard.get_keyboard(),
+                                      message="Вы выбрали " + currency_names_nominative_case[second_currency_index])
                 continue
             elif input_flag == 3:
                 input_flag = 0
@@ -236,9 +248,9 @@ for event in longpoll.listen():
                 main_menu()
                 continue
             elif request == "конвертер валют" or request == "1":
-                currency_names, currency_nominals, currency_value = converter_start()
+                currency_nominals, currency_value = converter_start()
                 cur_list = "Вот валюты с которыми я могу работать: \n"
-                for i in currency_names:
+                for i in currency_names_nominative_case:
                     cur_list += i + "\n"
                 cur_list += "По умолчанию перевожу USD в RUB\n"
                 keyboard = VkKeyboard(one_time=True)
@@ -270,9 +282,18 @@ for event in longpoll.listen():
                 # name2 = "Российский рубль"
                 # ————————————————————————————
                 try:
-                    answer = cur_calculation(entered_val, name1, name2, currency_names, currency_nominals,
-                                             currency_value)
-                    write_msg(event.user_id, str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
+                    answer = cur_calculation(entered_val, first_currency_index, second_currency_index,
+                                             currency_nominals, currency_value)
+                    if entered_val == 1:
+                        name1 = currency_names_nominative_case[first_currency_index]
+                    else:
+                        name1 = currency_names_genitive_case[first_currency_index]
+                    if answer == 1:
+                        name2 = currency_names_nominative_case[second_currency_index]
+                    else:
+                        name2 = currency_names_genitive_case[second_currency_index]
+                    write_msg(event.user_id,
+                              str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
                 except:
                     write_msg(event.user_id, "Что-то пошло не так")
                 continue

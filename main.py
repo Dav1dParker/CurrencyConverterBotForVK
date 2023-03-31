@@ -50,7 +50,10 @@ longpoll = VkLongPoll(vk)
 def main_menu():
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Конвертер валют', color=VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
     keyboard.add_button('Погода', color=VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Справка', color=VkKeyboardColor.SECONDARY)
     vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                           keyboard=keyboard.get_keyboard(), message='Выберите функцию')
 
@@ -152,6 +155,8 @@ input_flag = 0
 entered_val = 1
 first_currency_index = 14
 second_currency_index = 0
+currency_nominals = []
+currency_value = []
 
 with open("currency_names_nominative_case.txt", 'r', encoding='UTF-8') as file:
     currency_names_nominative_case = [line.rstrip() for line in file]
@@ -165,9 +170,11 @@ with open("currency_names_genitive_case_one.txt", 'r', encoding='UTF-8') as file
     currency_names_genitive_case_one = [line.rstrip() for line in file]
 file.close()
 
+with open("currency_names_shortcuts.txt", 'r', encoding='UTF-8') as file:
+    currency_names_shortcuts = [line.rstrip() for line in file]
+file.close()
+
 lower_currency_names_nominative_case = [item.lower() for item in currency_names_nominative_case]
-currency_nominals = ["Если вы это видите, то что-то пошло не так"]
-currency_value = ["Если вы это видите, то что-то пошло не так"]
 keyboard = VkKeyboard(one_time=True)
 for event in longpoll.listen():
 
@@ -183,34 +190,76 @@ for event in longpoll.listen():
             # Каменная логика ответа
             if input_flag == 1:
                 input_flag = 0
-                try:
-                    print(lower_currency_names_nominative_case.index(request))
-                    first_currency_index = lower_currency_names_nominative_case.index(request)
-                except ValueError:
-                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                          keyboard=keyboard.get_keyboard(),
-                                          message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
-                                                  "как написано в предложенном списке")
-                    continue
+                if request.isdigit():
+                    if 1 <= int(request) <= 44:
+                        first_currency_index = int(request) - 1
+                    else:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Кажется Вы попытались ввести номер валюты в списке, но валюты "
+                                                      "с таким номером не существует")
+                        continue
+                elif len(request) == 3:
+                    shortcut = str(request).upper()
+                    try:
+                        first_currency_index = currency_names_shortcuts.index(shortcut)
+                    except ValueError:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Кажется Вы попытались ввести код валюты, но валюты с таким "
+                                                      "кодом не существует")
+                        continue
+                else:
+                    try:
+                        print(lower_currency_names_nominative_case.index(request))
+                        first_currency_index = lower_currency_names_nominative_case.index(request)
+                    except ValueError:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                      "как написано в предложенном списке")
+                        continue
                 vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                       keyboard=keyboard.get_keyboard(),
                                       message="Вы выбрали " + currency_names_nominative_case[first_currency_index])
                 continue
             elif input_flag == 2:
                 input_flag = 0
-                try:
-                    print(lower_currency_names_nominative_case.index(request))
-                    second_currency_index = lower_currency_names_nominative_case.index(request)
-                except ValueError:
-                    vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
-                                          keyboard=keyboard.get_keyboard(),
-                                          message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
-                                                  "как написано в предложенном списке")
-                    continue
+                if request.isdigit():
+                    if 1 <= int(request) <= 44:
+                        second_currency_index = int(request) - 1
+                    else:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Кажется Вы попытались ввести номер валюты в списке, но валюты "
+                                                      "с таким номером не существует")
+                        continue
+                elif len(request) == 3:
+                    shortcut = str(request).upper()
+                    try:
+                        second_currency_index = currency_names_shortcuts.index(shortcut)
+                    except ValueError:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Кажется Вы попытались ввести код валюты, но валюты с таким "
+                                                      "кодом не существует")
+                        continue
+                else:
+                    try:
+                        print(lower_currency_names_nominative_case.index(request))
+                        second_currency_index = lower_currency_names_nominative_case.index(request)
+                    except ValueError:
+                        vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
+                                              keyboard=keyboard.get_keyboard(),
+                                              message="Такой валюты нет. Пожалуйста, введите название валюты точно, "
+                                                      "как написано в предложенном списке")
+                        continue
                 vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
                                       keyboard=keyboard.get_keyboard(),
-                                      message="Вы выбрали " + currency_names_nominative_case[second_currency_index])
+                                      message="Вы выбрали " + currency_names_nominative_case[first_currency_index])
                 continue
+
+
             elif input_flag == 3:
                 input_flag = 0
                 try:
@@ -225,11 +274,13 @@ for event in longpoll.listen():
                 continue
             if request == "начать":
                 write_msg(event.user_id,
-                          "Здравствуйте, я бот для конвертации валют. Вы можете производить взаимодействие с помощью "
-                          "команды 'бот'")
+                          "Здравствуйте, я бот для конвертации валют.\nВы можете производить взаимодействие с помощью "
+                          "команды 'бот'\nДля подробной справки используйте команду '/help'")
+                main_menu()
                 continue
             if request == "привет":
                 write_msg(event.user_id, 'Привет, ' + vk_plus.users.get(user_id=event.user_id)[0]['first_name'])
+                main_menu()
                 continue
             elif request == "пока":
                 write_msg(event.user_id, "Пока")
@@ -240,8 +291,9 @@ for event in longpoll.listen():
             elif request == "конвертер валют" or request == "1":
                 currency_nominals, currency_value = converter_start()
                 cur_list = "Вот валюты с которыми я могу работать: \n"
-                for i in currency_names_nominative_case:
-                    cur_list += i + "\n"
+                for i in range(len(currency_names_nominative_case)):
+                    cur_list += str(i + 1) + " " + currency_names_nominative_case[i] + " (" + currency_names_shortcuts[
+                        i] + ")" + "\n"
                 cur_list += "По умолчанию перевожу USD в RUB\n"
                 keyboard = VkKeyboard(one_time=True)
                 keyboard.add_button('Выбрать исходную валюту', color=VkKeyboardColor.SECONDARY)
@@ -253,11 +305,13 @@ for event in longpoll.listen():
                                       keyboard=keyboard.get_keyboard(), message=cur_list)
                 continue
             elif request == "выбрать исходную валюту":
-                write_msg(event.user_id, "Введите полное название исходной валюты")
+                write_msg(event.user_id,
+                          "Введите полное название исходной валюты, либо номер валюты в списке, либо её код")
                 input_flag = 1
                 continue
             elif request == "выбрать целевую валюту":
-                write_msg(event.user_id, "Введите полное название целевой валюты")
+                write_msg(event.user_id,
+                          "Введите полное название исходной валюты либо номер валюты в списке либо её код")
                 input_flag = 2
                 continue
             elif request == "ввести сумму":
@@ -265,12 +319,6 @@ for event in longpoll.listen():
                 input_flag = 3
                 continue
             elif request == "перевести":
-                # Для тестирования:
-                # ————————————————————————————
-                # entered_val = 100
-                # name1 = "Доллар США"
-                # name2 = "Российский рубль"
-                # ————————————————————————————
                 try:
                     answer = cur_calculation(entered_val, first_currency_index, second_currency_index,
                                              currency_nominals, currency_value)
@@ -290,9 +338,11 @@ for event in longpoll.listen():
                               str(entered_val) + " " + name1 + " = " + str(answer) + " " + name2)
                 except:
                     write_msg(event.user_id, "Что-то пошло не так")
+                main_menu()
                 continue
             elif request == "погода" or request == "2":
                 moscow()
+                main_menu()
                 continue
             elif request == "/help" or request == "help" or request == "справка" or request == "помощь":
                 write_msg(event.user_id, "я бот для конвертации валют.\n Для входа в главного меню используйте "
@@ -300,7 +350,9 @@ for event in longpoll.listen():
                                          "'конвертер валют' или отправьте цифру 1\nДля быстрого просмотра прогноза "
                                          "погоды введите команду "
                                          "'погода' или отправьте цифру 2")
+                main_menu()
                 continue
             else:
                 write_msg(event.user_id, "Неизвестная команда\n Вы можете посмотреть справку по командам с помощью "
                                          "/help")
+                main_menu()

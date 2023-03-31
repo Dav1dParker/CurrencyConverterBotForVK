@@ -7,6 +7,7 @@ import json
 import urllib.request
 import xml.dom.minidom
 import datetime
+import pickle
 
 
 def converter_start():
@@ -66,37 +67,11 @@ def cur_calculation(entered_val, first_currency_index, second_currency_index, cu
 
 def moscow():
     global main_weather, description_weather, wind_type
-    translate = {'Thunderstorm': "Гроза", 'Drizzle': "Моросит", 'Rain': "Дождь", 'Snow': "Снег", 'Mist': "Туман",
-                 'Smoke': "Дым", 'Haze': "Легкий туман", 'Dust': "Пыль", 'Fog': "Туман", 'Sand': "Моросит",
-                 'Песок': "Clear", 'Ясно': "Моросит", 'Clouds': "Облачно", 'Tornado': "торнадо", 'Squall': "Шквал",
-                 'Ash': "Пепел",
-                 'clear sky': "чистое небо", 'few clouds': "несколько облаков", 'scattered clouds': "рассеянные облака",
-                 'overcast clouds': "ААА", 'broken clouds': "разорванные облака", 'shower rain': "ливень",
-                 'rain': "дождь", 'thunderstorm': "гроза", 'snow': "снег", 'mist': "туман",
-                 'thunderstorm with light rain': "гроза с небольшим дождем", 'thunderstorm with rain': "гроза с дождем",
-                 'thunderstorm with heavy rain': "гроза с ливнем", 'light thunderstorm': "небольшая гроза",
-                 'heavy thunderstorm': "сильная гроза", 'ragged thunderstorm': "ураган",
-                 'thunderstorm with light drizzle': "гроза с небольшим туманом",
-                 'thunderstorm with drizzle': "гроза с туманом",
-                 'thunderstorm with heavy drizzle': "гроза с сильным туманом",
-                 'light intensity drizzle': "незначительный туман", 'heavy intensity drizzle': "интенсивный туман",
-                 'light intensity drizzle rain': "легкий дождь с туманом", 'drizzle rain': "дождь с туманом",
-                 'heavy intensity drizzle rain': "сильный туман с дождём", 'shower rain and drizzle': "туман и ливень",
-                 'heavy shower rain and drizzle': "сильный туман и ливень", 'shower drizzle': "туман с ураганом",
-                 'light rain': "небольшой дождь", 'moderate rain': "умеренный дождь",
-                 'heavy intensity rain': "сильный дождь", 'very heavy rain': "очень сильный дождь",
-                 'extreme rain': "чрезвычайно сильный дождь",
-                 'freezing rain': "ледяной дождь", 'light intensity shower rain': "небольшой ледяной дождь",
-                 'heavy intensity shower rain': "сильный ливень", 'ragged shower rain': "ледянной ливень",
-                 'light snow': "легкий снег", 'Heavy snow': "сильный снег", 'Sleet': "Слякоть",
-                 'Light shower sleet': "Легкий дождь с мокрым снегом", 'Shower sleet': "Ливень с мокрым снегом",
-                 'Light rain and snow': "легкий дождь со снегом", 'Rain and snow': "дождь со снегом",
-                 'Light shower snow': "Легкий снежный дождь", 'Shower snow': "Ливень снега",
-                 'Heavy shower snow': "Сильный ливень со снегом", 'sand/ dust whirls': "вихри песка/ пыли",
-                 'volcanic ash': "Вулканический пепел",
-                 'few clouds: 11-25%': "мало облаков: 11-25%", 'scattered clouds: 25-50%': "рассеянные облака: 25-50%",
-                 'broken clouds: 51-84%': "разорванные облака: 51-84%",
-                 'overcast clouds: 85-100%': "Облачность: 85-100%"}
+
+    with open('translate.pickle', 'rb') as handle:
+        translate = pickle.load(handle)
+    handle.close()
+
     weather = requests.get(
         "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
     json_weather = json.loads(weather.content)
@@ -211,7 +186,6 @@ for event in longpoll.listen():
                         continue
                 else:
                     try:
-                        print(lower_currency_names_nominative_case.index(request))
                         first_currency_index = lower_currency_names_nominative_case.index(request)
                     except ValueError:
                         vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),
@@ -246,7 +220,6 @@ for event in longpoll.listen():
                         continue
                 else:
                     try:
-                        print(lower_currency_names_nominative_case.index(request))
                         second_currency_index = lower_currency_names_nominative_case.index(request)
                     except ValueError:
                         vk_plus.messages.send(user_id=event.user_id, random_id=vk_api.utils.get_random_id(),

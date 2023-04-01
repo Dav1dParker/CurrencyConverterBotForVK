@@ -26,8 +26,7 @@ def converter_start():
                 currency_nominals.append(child.childNodes[0].nodeValue)
             if child.nodeName == "Value":
                 currency_value.append(child.childNodes[0].nodeValue)
-    for i in range(len(currency_value)):  # , -> .
-        currency_value[i] = currency_value[i].replace(',', '.')
+    currency_value = [w.replace(',', '.') for w in currency_value] # , -> .
     return currency_nominals, currency_value
 
 
@@ -66,12 +65,10 @@ def cur_calculation(entered_val, first_currency_index, second_currency_index, cu
 
 
 def moscow():
-    global main_weather, description_weather, wind_type
-
     with open('translate.pickle', 'rb') as handle:
         translate = pickle.load(handle)
     handle.close()
-
+    main_weather = "None"
     weather = requests.get(
         "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
     json_weather = json.loads(weather.content)
@@ -120,8 +117,8 @@ def moscow():
         wind_type = "Ураган"
     forecast = ("Погода в Москве: " + main_weather + "\n" + " Температура " + str(
         int(temp_min)) + "-" + str(
-        int(temp_max)) + "°C\n" + "Давление: " + str(int(float(pressure) * 0.750064)) + "мм рт.ст. Влажность: " + str(
-        aqua) + "%\n" + "Ветер: " + wind_type + ", " + str(speed) + "м/с, " + dir)
+        int(temp_max)) + "°C\n" + "Давление: " + str(int(float(pressure) * 0.750064)) + " мм рт.ст. Влажность: " + str(
+        aqua) + "%\n" + "Ветер: " + wind_type + ", " + str(speed) + " м/с, " + dir)
     write_msg(event.user_id, forecast)
 
 
@@ -132,7 +129,8 @@ first_currency_index = 14
 second_currency_index = 0
 currency_nominals = []
 currency_value = []
-
+user_sessions = {}
+current_user_id = 0
 with open("currency_names_nominative_case.txt", 'r', encoding='UTF-8') as file:
     currency_names_nominative_case = [line.rstrip() for line in file]
 file.close()
@@ -159,9 +157,32 @@ for event in longpoll.listen():
         # Если оно имеет метку для меня(то есть бота)
         if event.to_me:
             print('New from {}, text = {}'.format(event.user_id, event.text))
-            # Сообщение от пользователя
+            if current_user_id != event.user_id:
+                if not (event.user_id in user_sessions):
+                    # Сохраняем сессию прошлого пользователя
+                    user_sessions[current_user_id] = [input_flag, entered_val, first_currency_index,
+                                                      second_currency_index]
+                    # Создаём сессию для нового пользователя
+                    input_flag = 0
+                    entered_val = 1
+                    first_currency_index = 14
+                    second_currency_index = 0
+                    user_sessions[event.user_id] = [input_flag, entered_val, first_currency_index,
+                                                    second_currency_index]
+                # Индексы: 0 - input_flag; 1 - введённое значение; 2 - индекс первой; 3 - индекс второй
+                else:
+                    # Сохраняем сессию прошлого пользователя
+                    user_sessions[current_user_id] = [input_flag, entered_val, first_currency_index,
+                                                      second_currency_index]
+                    # Загружаем сессию текущего пользователя
+                    input_flag = user_sessions[event.user_id][0]
+                    entered_val = user_sessions[event.user_id][1]
+                    first_currency_index = user_sessions[event.user_id][2]
+                    second_currency_index = user_sessions[event.user_id][3]
+            current_user_id = event.user_id
             request = event.text
             request = request.lower()
+            # Сообщение от пользователя
             # Каменная логика ответа
             if input_flag == 1:
                 input_flag = 0
@@ -314,15 +335,18 @@ for event in longpoll.listen():
                 main_menu()
                 continue
             elif request == "погода" or request == "2":
-                moscow()
+                try:
+                    moscow()
+                except:
+                    write_msg(event.user_id, "Что-то пошло не так")
                 main_menu()
                 continue
             elif request == "/help" or request == "help" or request == "справка" or request == "помощь":
-                write_msg(event.user_id, "я бот для конвертации валют.\n Для входа в главного меню используйте "
-                                         "команду 'бот'\nДля быстрого доступа к конвертору валют введите команду "
-                                         "'конвертер валют' или отправьте цифру 1\nДля быстрого просмотра прогноза "
-                                         "погоды введите команду "
-                                         "'погода' или отправьте цифру 2")
+                write_msg(event.user_id, "я бот для конвертации валют.\nТакже я могу показать погоду в Москве\n Для "
+                                         "входа в главного меню используйте команду 'бот'\nДля быстрого доступа к "
+                                         "конвертору валют введите команду'конвертер валют' или отправьте цифру "
+                                         "1\nДля быстрого просмотра прогноза погоды введите команду 'погода' или "
+                                         "отправьте цифру 2")
                 main_menu()
                 continue
             else:

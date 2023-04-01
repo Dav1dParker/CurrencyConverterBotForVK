@@ -69,14 +69,13 @@ def moscow():
         translate = pickle.load(handle)
     handle.close()
     main_weather = "None"
+    description_weather = "None"
     weather = requests.get(
         "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
     json_weather = json.loads(weather.content)
     for i in json_weather["weather"]:
-        main_weather = (i["main"])
-        main_weather = (translate[main_weather])
-        description_weather = (i["description"])
-        description_weather = (translate[description_weather])
+        main_weather = (translate[i["main"]])
+        description_weather = (translate[i["description"]])
     temp_min = json_weather["main"]["temp_min"]
     temp_max = json_weather["main"]["temp_max"]
     pressure = json_weather["main"]["pressure"]
@@ -86,8 +85,8 @@ def moscow():
     wind_directions = (
         "северный", "северо-восточный", "восточный", "юго-восточный", "южный", "юго-западный", "западный",
         "северо-западный")
-    direction = int((deg + 22.5) // 45 % 8)
-    dir = str(wind_directions[direction])
+    direction_value = int((deg + 22.5) // 45 % 8)
+    direction = str(wind_directions[direction_value])
     wind_type = ""
     if float(speed) <= 0.2:
         wind_type = "Штиль"
@@ -115,10 +114,10 @@ def moscow():
         wind_type = "Жестокий шторм"
     if float(speed) >= 33:
         wind_type = "Ураган"
-    forecast = ("Погода в Москве: " + main_weather + "\n" + " Температура " + str(
+    forecast = ("Погода в Москве: " + main_weather + "\n" + description_weather + "\nТемпература " + str(
         int(temp_min)) + "-" + str(
         int(temp_max)) + "°C\n" + "Давление: " + str(int(float(pressure) * 0.750064)) + " мм рт.ст. Влажность: " + str(
-        aqua) + "%\n" + "Ветер: " + wind_type + ", " + str(speed) + " м/с, " + dir)
+        aqua) + "%\n" + "Ветер: " + wind_type + ", " + str(speed) + " м/с, " + direction)
     write_msg(event.user_id, forecast)
 
 

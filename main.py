@@ -7,7 +7,7 @@ import json
 import urllib.request
 import xml.dom.minidom
 import datetime
-import pickle
+from translate import translation_dict
 
 
 def converter_start():
@@ -65,17 +65,14 @@ def cur_calculation(entered_val, first_currency_index, second_currency_index, cu
 
 
 def moscow():
-    with open('translate.pickle', 'rb') as handle:
-        translate = pickle.load(handle)
-    handle.close()
     main_weather = "None"
     description_weather = "None"
     weather = requests.get(
         "https://api.openweathermap.org/data/2.5/weather?q=moscow&appid=bc6fb75f3340b3fbb4417fd96406e0f1&units=metric")
     json_weather = json.loads(weather.content)
     for i in json_weather["weather"]:
-        main_weather = (translate[i["main"]])
-        description_weather = (translate[i["description"]])
+        main_weather = (translation_dict[i["main"]])
+        description_weather = (translation_dict[i["description"]])
     temp_min = json_weather["main"]["temp_min"]
     temp_max = json_weather["main"]["temp_max"]
     pressure = json_weather["main"]["pressure"]

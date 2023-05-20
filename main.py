@@ -26,7 +26,7 @@ def converter_start():
                 currency_nominals.append(child.childNodes[0].nodeValue)
             if child.nodeName == "Value":
                 currency_value.append(child.childNodes[0].nodeValue)
-    currency_value = [w.replace(',', '.') for w in currency_value] # , -> .
+    currency_value = [w.replace(',', '.') for w in currency_value]  # , -> .
     return currency_nominals, currency_value
 
 
